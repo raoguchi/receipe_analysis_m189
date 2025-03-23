@@ -1,5 +1,341 @@
----
-title: Recipe Rating Analysis
----
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Understanding Recipe Ratings</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 2rem auto;
+      max-width: 900px;
+      line-height: 1.6;
+      padding: 0 1rem;
+      color: #222;
+    }
+    h1, h2, h3 {
+      color: #333;
+    }
+    img {
+      max-width: 100%;
+      height: auto;
+      display: block;
+      margin: 1rem 0;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1rem 0;
+    }
+    table, th, td {
+      border: 1px solid #ccc;
+    }
+    th, td {
+      padding: 0.5rem;
+      text-align: left;
+    }
+    code {
+      background-color: #f4f4f4;
+      padding: 0.2rem 0.4rem;
+      border-radius: 3px;
+    }
+  </style>
+</head>
+<body>
+<h1>Understanding Ratings Based on Nutrition and Number of Ingredients</h1>
 
-{% include_relative README.md %}
+<h2>Authors</h2>
+
+<ul>
+<li>Pratham Mittal  </li>
+<li>Ryosuke Oguchi  </li>
+<li>Chaklam Ng  </li>
+</ul>
+
+<hr />
+
+<h2>📌 Abstract</h2>
+
+<p>This study investigates the relationship between recipe characteristics, nutritional content, and user ratings to identify key factors that influence perceived recipe quality. Using Food.com datasets, we examine the impact of ingredient count, preparation steps, and nutritional components (calories, fats, sugars, etc.) on user ratings. Insights from this analysis help understand user preferences and guide recipe development.</p>
+
+<hr />
+
+<h2>📁 Dataset</h2>
+
+<h3>Data Sources</h3>
+
+<p>Two CSV files from <a href="https://www.kaggle.com/datasets">Food.com</a> were used:</p>
+
+<h4><code>recipes.csv</code></h4>
+
+<table>
+<thead>
+<tr>
+  <th>Column</th>
+  <th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>name</td>
+  <td>Recipe name</td>
+</tr>
+<tr>
+  <td>id</td>
+  <td>Recipe ID</td>
+</tr>
+<tr>
+  <td>minutes</td>
+  <td>Minutes to prepare the recipe</td>
+</tr>
+<tr>
+  <td>contributor_id</td>
+  <td>ID of the user who submitted the recipe</td>
+</tr>
+<tr>
+  <td>submitted</td>
+  <td>Date the recipe was submitted</td>
+</tr>
+<tr>
+  <td>tags</td>
+  <td>Food.com tags for the recipe</td>
+</tr>
+<tr>
+  <td>nutrition</td>
+  <td><code>[calories, total fat, sugar, sodium, protein, saturated fat, carbohydrates]</code></td>
+</tr>
+<tr>
+  <td>n_steps</td>
+  <td>Number of preparation steps</td>
+</tr>
+<tr>
+  <td>steps</td>
+  <td>List of preparation steps</td>
+</tr>
+<tr>
+  <td>description</td>
+  <td>Recipe description</td>
+</tr>
+</tbody>
+</table>
+
+<h4><code>interactions.csv</code></h4>
+
+<table>
+<thead>
+<tr>
+  <th>Column</th>
+  <th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>user_id</td>
+  <td>ID of the reviewer</td>
+</tr>
+<tr>
+  <td>recipe_id</td>
+  <td>Corresponding recipe ID</td>
+</tr>
+<tr>
+  <td>date</td>
+  <td>Review date</td>
+</tr>
+<tr>
+  <td>rating</td>
+  <td>User rating (1-5)</td>
+</tr>
+<tr>
+  <td>review</td>
+  <td>User-written review</td>
+</tr>
+</tbody>
+</table>
+
+<hr />
+
+<h2>🔍 Exploratory Data Analysis (EDA)</h2>
+
+<p>The datasets were merged on <code>recipe_id</code> and cleaned. The following steps were taken:</p>
+
+<ul>
+<li>Parsed and expanded the nutrition column into individual features.</li>
+<li>Converted step and tag data into proper list format using <code>ast.literal_eval</code>.</li>
+<li>Created a new <code>avg_rating</code> column per recipe.</li>
+<li>Converted missing ratings to 0 where applicable.</li>
+</ul>
+
+<h3>📈 Univariate Analysis</h3>
+
+<p><strong>Number of Steps per Recipe:</strong></p>
+
+<p>Most recipes have fewer than 20 steps, with a median around 8.</p>
+
+<p><img src="images/steps_distribution.png" alt="steps_distribution" /></p>
+
+<p><strong>Number of Ingredients:</strong></p>
+
+<p>Most recipes use 5–15 ingredients. Recipes with more than 25 ingredients are considered outliers.</p>
+
+<p><img src="images/ingredients_distribution.png" alt="ingredients_distribution" /></p>
+
+<hr />
+
+<h3>📊 Bivariate Analysis</h3>
+
+<p><strong>Average Rating vs. Number of Steps:</strong></p>
+
+<p>No strong trend was observed, though extremely long recipes often scored a 5.</p>
+
+<p><img src="images/rating_vs_steps.png" alt="rating_vs_steps" /></p>
+
+<p><strong>Average Rating vs. Calories:</strong></p>
+
+<p>Again, no strong correlation was found.</p>
+
+<p><img src="images/rating_vs_calories.png" alt="rating_vs_calories" /></p>
+
+<hr />
+
+<h3>🔗 Correlation Matrix (Heatmap)</h3>
+
+<p>A heatmap was generated to explore inter-feature correlations.</p>
+
+<p><img src="images/heatmap.png" alt="heatmap" /></p>
+
+<p>Most features showed weak correlations with <code>avg_rating</code>.</p>
+
+<hr />
+
+<h3>🧩 Missing Data Analysis</h3>
+
+<p>Using a permutation test:</p>
+
+<ul>
+<li>Null Hypothesis: Distribution of calories is the same with or without reviews.</li>
+<li>p-value = 0.002 → Statistically significant difference.</li>
+<li>Conclusion: The missingness in <code>review</code> column depends on <code>calories</code>.</li>
+</ul>
+
+<p><img src="images/permutation_test.png" alt="permutation_test" /></p>
+
+<hr />
+
+<h2>🧪 Hypothesis Testing</h2>
+
+<blockquote>
+  <p><strong>Question</strong>: Do people rate recipes the same regardless of complexity?</p>
+</blockquote>
+
+<ul>
+<li>Null Hypothesis: No relationship between <code>avg_rating</code> and <code>n_steps</code></li>
+<li>Alternate Hypothesis: There is a relationship</li>
+<li>p-value = 0.726 → Fail to reject the null hypothesis</li>
+</ul>
+
+<h3>🔍 Insight</h3>
+
+<p>Recipe complexity (measured by steps) does <strong>not</strong> significantly influence user ratings.</p>
+
+<hr />
+
+<h2>📈 Regression Analysis</h2>
+
+<h3>Linear &amp; Polynomial Models</h3>
+
+<ul>
+<li>Simple and multiple linear regressions were applied.</li>
+<li>Polynomial terms tested for non-linearity.</li>
+<li>Results showed <strong>very weak predictability</strong>:
+<ul>
+<li>R² ≈ 0.001</li>
+</ul></li>
+</ul>
+
+<h3>Multicollinearity</h3>
+
+<ul>
+<li>VIF scores were acceptable.</li>
+<li>However, large condition numbers suggested model instability.</li>
+</ul>
+
+<hr />
+
+<h2>⚙️ Model Selection</h2>
+
+<h3>Methods Used</h3>
+
+<ul>
+<li>Forward Selection</li>
+<li>Backward Selection</li>
+<li>Mixed Selection</li>
+</ul>
+
+<table>
+<thead>
+<tr>
+  <th>Method</th>
+  <th>Selected Variables</th>
+  <th>R²</th>
+  <th>Insight</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>Forward Selection</td>
+  <td>calories, protein, carbs</td>
+  <td>~0.001</td>
+  <td>Variables statistically significant, but weak</td>
+</tr>
+<tr>
+  <td>Backward Selection</td>
+  <td>Same as above</td>
+  <td>~0.001</td>
+  <td>No new variables added</td>
+</tr>
+<tr>
+  <td>Mixed Selection</td>
+  <td>Additional variables (insignificant)</td>
+  <td>~0.001</td>
+  <td>Did not improve model performance</td>
+</tr>
+</tbody>
+</table>
+
+<hr />
+
+<h2>📌 Key Takeaways</h2>
+
+<ul>
+<li><strong>No strong predictors</strong> of average rating found among nutritional and step-related variables.</li>
+<li>Some high-rated recipes are outliers with large servings, possibly skewing results.</li>
+<li>Suggests subjective factors (taste, appearance, cultural preference) are more impactful.</li>
+</ul>
+
+<hr />
+
+<h2>🔄 Recommendations</h2>
+
+<ul>
+<li><strong>Include qualitative data</strong> like review sentiment or tags.</li>
+<li>Use <strong>advanced ML models</strong> to capture complex patterns.</li>
+<li>Consider <strong>user segmentation</strong> to uncover personalized trends.</li>
+</ul>
+
+<hr />
+
+<h2>🧾 Conclusion</h2>
+
+<p>While the idea of predicting recipe ratings using nutritional and structural data is compelling, the analysis reveals that such features alone are insufficient. Human taste is nuanced, and user ratings likely depend on more subjective elements not captured here.</p>
+
+<hr />
+
+<h2>📚 References</h2>
+
+<ul>
+<li>Food.com Dataset: <a href="https://www.kaggle.com/datasets">Kaggle Link</a></li>
+<li>Related Project: <a href="https://github.com/kbpavan/Text-Analytics-on-Food.com-Recipes-Review-Data-">Text Analytics on Food.com</a></li>
+</ul>
+
+</body>
+</html>
